@@ -1,0 +1,260 @@
+---
+title: "Review of BBMP Finances, Part 1 Trade License"
+author: "Vijayvithal"
+date: "April 28, 2016"
+#output: ioslides_presentation
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(leaflet)
+library(rgdal)
+lakh<-100000
+crore<-10000000
+```
+
+
+
+```{r cache=TRUE}
+create_tl_df<-function(){
+  frame<-data.frame()
+  csvfiles<- list.files(path="ziploc")
+  csvdf<-data.frame()
+ for (csvfile in csvfiles) {
+   #print(csvfile)
+   csvfile1<-paste0("ziploc","\\",csvfile)
+   df<-read.csv(csvfile1,header = T,stringsAsFactors = F,colClasses = c("integer", "character", "character", "integer", "character", "character", "character", "character", "integer", "character", "character", "character", "character", "numeric")  )
+   df<-mutate(df,month=csvfile)
+   csvdf<-rbind(csvdf,df)
+ }
+  
+   frame<-rbind(frame,csvdf)
+   return (frame)
+}
+#zipfiles<-list.files(path="tabula",pattern="tabula-*",full.names = T)
+df_trade_license<-data.frame()
+if(!file.exists("trade_license.csv")){
+ 
+df_trade_license<-create_tl_df()
+write.csv(df_trade_license,"trade_license.csv",)
+} else   {
+ df_trade_license <- read.csv("trade_license.csv",header = T,stringsAsFactors = F )
+}
+
+```
+
+```{r }
+library(lubridate)
+library(ggplot2)
+library(xtable)
+#Data Cleanup
+df_trade_license$month<- gsub(".*tabula-April.*.csv","April-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Aug.*.csv","August-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Decembe.*.csv","December-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-july.*.csv","July-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-June.*.csv","June-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-May.*.csv","May-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Nov.*.csv","November-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Octo.*.csv","October-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Sep.*.csv","September-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-January.*.csv","January-2016",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Feb.*.csv","February-2016",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Feb-.*.csv","February-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*sam_March.*.csv","March-2015",df_trade_license$month)
+df_trade_license$month<- mdy(gsub("-"," 1 ",df_trade_license$month))
+df_trade_license$Trade.Minor.Name<-gsub("CONSU PTION","CONSUMPTION",df_trade_license$Trade.Minor.Name )
+
+df_trade_license<-rename(df_trade_license,WARD_NO=Ward.ID)
+```
+## BBMP Finances, Introduction
+
+* We have come across a large set of data on BBMP finances from sources within and without BBMP.
+* Initial analysis of this data indicates that by cleaning up its act, BBMP can not only meet but also exceed its revenue targets without increasing the tax burden on the honest tax paying citizens.
+* As per section 41a and 41b(xiii) of the RTI act all these datasets should be proactively and regularly put in public domain.
+  + We demand that the government fulfils its obligations as per the RTI act and put these datasets online in a format compliant with the national data sharing and accessibility policy 2012.
+  + This will enable exploration detection and reporting of revenue leakage by the citizens of Bangalore
+* In this document we will discuss some of the key findings from the trade license dataset.
+* Over the next few months we will be presenting the analysis reports of other datasets including the property tax dataset.
+
+```
+Q: Is the government interested in  plugging the revenue leakage.
+```
+
+
+## Trade License
+
+
+```{r}
+ggplot(df_trade_license,aes(month,fill=Zone.Name))+geom_bar()+facet_wrap(~Zone.Name ,ncol=2)+ylab("License Application count")
+```
+
+* BBMP collects annual trade license fees from some 55,000 traders.
+* By BBMP's own admission it needs to collect fees from some additional 4 lakh traders.
+* An Analysis of Trade license data from 2015 shows that BBMP has either failed to collect or to report the collected trade license fees from traders in Mahadevapura and Yelhanka Zone
+
+## We demand that 
+
+> BBMP conduct an audit of the trade license fee collection in Mahadevapura and Yelhenka zone and put the correct figures in the public domain.
+
+
+```{r, message=FALSE, warning=FALSE, include=FALSE}
+revenue<-df_trade_license%>%group_by(WARD_NO)%>%summarise(Amount=sum(Amount.Paid)/lakh)
+shp<-readOGR("../Data-Driven-Policy/book/bangalore/bangalore/gis/bbmpwards","bbmpwards")
+shp@data<-left_join(shp@data,revenue)
+shp@data<-shp@data%>%mutate(popup=paste0("Ward=",WARD_NAME,"<br/>Amount=",Amount))
+```
+```{r}
+pal<-colorBin(rev(topo.colors(10)),shp$Amount,na.color="#FF0CC0")
+leaflet(shp)%>%
+addTiles(urlTemplate = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png") %>%
+addPolygons(stroke=T,fillColor =pal(shp$Amount), popup=shp$popup)  %>%
+#addCircles(lng=shp$LON,lat=shp$LAT,radius=shp$NumPG)%>%
+addLegend(position = 'topright', pal=pal,values=shp$Amount, opacity = 0.4,       title = 'Trade license fees(in lakhs)/Ward')
+```
+
+> Q: Why is Shantala Nagar able to collect 1 Crore+ while Market areas like Malleshwaram (4 lakh), Shivaji Nagar(5 lakh),Chickpet(11 lakh), K.R Market(6 lakhs) collect less than a 10th?
+
+## We Demand that BBMP 
+
+> Launch a Trade License collection drive in all major market and commercial areas of Bangalore.
+
+
+## Hotels
+
+* Travel portals  list about 1070 Hotels in Bangalore. This does not include the smaller boarding and lodging units. 
+* BBMP's Trade license data shows that Bangalore has
+   - 649 lodging units. i.e. _atleast `r 100 - 100*649/1070`% units are missing from BBMP trade license dataset_
+   - 783 PG Units i.e. 4 PG Homes per ward. _Visual inspection and the scourge of PG Home pamphlets on every street indicates a different picture._
+   - 306 Choultries, Marriage halls, Party halls, convection centers etc across Bangalore. i.e. approx 1.5 per ward. _With every other restaurant sporting a party hall and a random google search throwing up series of kalayan mantapa's within less than a Km of each other and religious institution also doubling up as marriage halls the actual number will be far higher_
+
+##  We demand that BBMP 
+
+* Compare the Hotel data from the travel sites to its internal license data and issue demand notice to those units operating without proper trade license.
+* Extract the location of kalyan mantapa's from the marriage registration database and issue demand notice.
+* Issue demand notice to all restaurants sporting a party hall.
+
+
+## Paying Guest accomodations in Bangalore
+```{r}
+pgHomes<- df_trade_license %>% group_by(Ward.Name,WARD_NO)%>%filter(grepl("Paying Guests",Trade.Sub.Name)) %>% summarise(NumPG=n(),fees=sum(Amount.Paid))%>%arrange(NumPG)
+```
+BBMP's Trade license database reports `r sum(pgHomes$NumPG)` Paying Guest homes in `r NROW(pgHomes)` Wards. BBMP has either not collected the license fee or not reported the collection in the remaining `r 198 - NROW(pgHomes)`
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+shp<-readOGR("../Data-Driven-Policy/book/bangalore/bangalore/gis/bbmpwards","bbmpwards")
+shp@data<-left_join(shp@data,pgHomes)
+shp@data<-shp@data%>%mutate(popup=paste0("Ward=",WARD_NAME,"<br/>PG=",NumPG))
+```
+```{r}
+pal<-colorBin(rev(topo.colors(10)),shp$NumPG,na.color="#FF0CC0")
+leaflet(shp)%>%
+addTiles(urlTemplate = "http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png") %>%
+addPolygons(stroke=T,fillColor =pal(shp$NumPG), popup=shp$popup)  %>%
+#addCircles(lng=shp$LON,lat=shp$LAT,radius=shp$NumPG)%>%
+addLegend(position = 'topright', pal=pal,values=shp$NumPG, labels = "PG Homes across wards", opacity = 0.4,       title = 'Legend')
+```
+
+* Examining the map in detail we find examples like 
+  + Kumarswamy layout with 20 PG Homes, with its neighbouring wards having 0-3 PG Homes.
+  + Madiwala with 88 PG Homes while it neighbour Jakkasandra has only 4 and Gurappanapalya has 0 PG Homes.
+
+If we assume that proper identification of PG homes took place in wards with more than 10PG Homes then the average across bangalore would be `r mean(pgHomes[pgHomes$NumPG>=10,]$NumPG)` instead of the current average of `r mean(pgHomes$NumPG)`
+
+```{r results='asis'}
+ print(xtable(pgHomes),type="html")
+```
+
+
+## Where is the Building Mafia and the Water Tanker Mafia?
+
+* BBMP Has a category of Construction materials under which only 81 Traders are registered.
+* Similarly there is only one registered Water Tanker operator.
+
+### Property Tax Residential Units
+
+* The city population is currently estimated to be over 1 crore.
+  + This translates to over 25 lakh residential units (average family size of 4 as per census)
+* As per BBMP there are over 16 lakh residential properties in Bangalore.
+* Last year BBMP Collected property Tax from 10 Lakh residential properties.
+  + BBMP's revenue loss from residential properties is between 40-60%
+* As per our sources while over 2 lakh residential units were built from 2010 to 2015 only 95 Occupancy certificates were issues.
+
+## Demand 1
+
+> **Demand** In accordance with Section 4-1b xiii, We demand that BBMP proactively and regularly declare 
+> 1. The details of the permits and authorizations granted by it for construction of the residential and commercial units in Bangalore,
+> 2. The details of the authorization to occupy a residential unit.
+
+
+
+
+### Commercial Units.
+
+## Revenue Leakage
+
+We have identified 6 types of revenue leakage in BBMP's System
+
+1. Units who do not pay.
+2. Units which are mis-classified and pay a lower tax rate.
+3. Units who pay tax but are issued fake challan.
+4. Reuse of the same DD number for multiple properties in the tax system
+5. Non-remittance of the tax collected to the proper account.
+6. Delayed remittance of the tax collected to the proper account.
+7. Non reversal of Bounced cheque transaction in the system.
+8. Manipulation of tax due amount in the system backend.
+
+The first two require a collusion between the citizen and the BBMP revenue officer. The collusion may require something as simple as BBMP officers neglecting their duties for this type of leakage to take place. or it may be as worse as the BBMP officers being active participants and advisors to the citizens in this tax evasion scheme.
+
+The third, fourth, fifth and sixth can be addressed by eliminating the need for the citizen to interact with the BBMP officials. Direct online transfer can address this issue. Merging the old records in the new system and enabling online payment of past dues is also required to curb this set of leakage.
+
+The seventh type of leakage can be detected by regular recouncilation of BBMP accounts with the corresponding bank.
+
+The eights type of leakage can be addressed by auditing the tax computation and tax collection systems.
+
+# Trade license
+
+## Parting Shot
+
+## Ayurvedic clinics or Barber shops?
+BBMP classifies Ayurvedic clinics as either Barber Shops or grocery/food stores. 
+
+* Does it mean that these clinics are not authorised to treat patients?
+* Or is BBMP unable to distinguish between ancient Indian Medical system and Ancient European medical system?
+```{r results='asis'}
+clinics<-df_trade_license %>%  filter(grepl("Ayurv",Trade.Name))%>%
+                select(Trade.Name,Trade.Minor.Name)
+ print(xtable( clinics   ),type="html")
+
+```
+
+# Appendix
+
+## The heads under which fees are collected are.
+
+```{r results='asis'}
+ print(xtable(table(df_trade_license$Trade.Minor.Name)),type="html")
+
+```
+
+
+# Missing Items
+The following heads have no reciepts..
+
+* Canteen in industries/hospitals etc. 
+* Heads for building material (lime,cement, sand, stone etc.) 
+
+### 3rd Party sources
+#### Make My Trip
+* Make my trip reports 1070 hotels in Bangalore
+* 39 5 star hotels
+* 57 4 star hotels
+* 261 3 star hotels
+* 121 2 star hotels
+* 300 1 star hotels
+
+#### Zomato
+* Zomato lists 8000+ restaurants in bangalore
