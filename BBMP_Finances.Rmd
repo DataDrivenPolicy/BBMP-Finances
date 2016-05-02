@@ -8,6 +8,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
+options(digits=2,scipen = 9)
 library(dplyr)
 library(leaflet)
 library(rgdal)
@@ -60,8 +61,8 @@ df_trade_license$month<- gsub(".*tabula-Nov.*.csv","November-2015",df_trade_lice
 df_trade_license$month<- gsub(".*tabula-Octo.*.csv","October-2015",df_trade_license$month)
 df_trade_license$month<- gsub(".*tabula-Sep.*.csv","September-2015",df_trade_license$month)
 df_trade_license$month<- gsub(".*tabula-January.*.csv","January-2016",df_trade_license$month)
-df_trade_license$month<- gsub(".*tabula-Feb.*.csv","February-2016",df_trade_license$month)
 df_trade_license$month<- gsub(".*tabula-Feb-.*.csv","February-2015",df_trade_license$month)
+df_trade_license$month<- gsub(".*tabula-Feb.*.csv","February-2016",df_trade_license$month)
 df_trade_license$month<- gsub(".*sam_March.*.csv","March-2015",df_trade_license$month)
 df_trade_license$month<- mdy(gsub("-"," 1 ",df_trade_license$month))
 df_trade_license$Trade.Minor.Name<-gsub("CONSU PTION","CONSUMPTION",df_trade_license$Trade.Minor.Name )
@@ -70,21 +71,30 @@ df_trade_license<-rename(df_trade_license,WARD_NO=Ward.ID)
 ```
 ## BBMP Finances, Introduction
 
-* We have come across a large set of data on BBMP finances from sources within and without BBMP.
-* Initial analysis of this data indicates that by cleaning up its act, BBMP can not only meet but also exceed its revenue targets without increasing the tax burden on the honest tax paying citizens.
-* As per section 41a and 41b(xiii) of the RTI act all these datasets should be proactively and regularly put in public domain.
-  + We demand that the government fulfils its obligations as per the RTI act and put these datasets online in a format compliant with the national data sharing and accessibility policy 2012.
+* For 2016-17 BBMP has put a revenue target of an additional 980 Crores from Property Tax.
+* Examining the revenue potential across various segments we find that BBMP can not only meet by exceed by a large margin the target amount of 980 Crores without raising the tax rate by a single paisa. For e.g.
+
+1. Betterment charges worth 390 Crores have not been collected in Mahadevapura Zone alone.
+2. Property Taxes from 110 villages of Bellundur were not collected for two years post their merging with BBMP.
+3. Sources with BBMP claim that penalties on unauthorised hoardings can raise 2,000 Crores
+4. BBMP's own estimate show that if Trade license fees were collected from all traders then this year around 300 Crores can be raised instead of 18 Crores last years. If the arrears for the years for which trade license fees was not collected is recovered, the final sum will be much higher.
+
+
+Over the next few month we will analyse and report the leakage in different heads of BBMP Accounts using either data sourced from BBMP or from other third party sources.
+
+*In this report we cover the Trade license data over a 13 months period from Jan 2015 to Feb 2015*
+
+
+* As per section 41a and 41b(xiii) of the RTI act all these data-sets should be proactively and regularly put in public domain.
+  + We demand that the government should fulfill its obligations as per the RTI act and put these data-sets online in a format compliant with the national data sharing and accessibility policy 2012.
   + This will enable exploration detection and reporting of revenue leakage by the citizens of Bangalore
-* In this document we will discuss some of the key findings from the trade license dataset.
-* Over the next few months we will be presenting the analysis reports of other datasets including the property tax dataset.
 
 ```
 Q: Is the government interested in  plugging the revenue leakage.
 ```
 
 
-## Trade License
-
+## Trade License, Overview.
 
 ```{r}
 ggplot(df_trade_license,aes(month,fill=Zone.Name))+geom_bar()+facet_wrap(~Zone.Name ,ncol=2)+ylab("License Application count")
@@ -113,9 +123,10 @@ addPolygons(stroke=T,fillColor =pal(shp$Amount), popup=shp$popup)  %>%
 #addCircles(lng=shp$LON,lat=shp$LAT,radius=shp$NumPG)%>%
 addLegend(position = 'topright', pal=pal,values=shp$Amount, opacity = 0.4,       title = 'Trade license fees(in lakhs)/Ward')
 ```
+```
 
-> Q: Why is Shantala Nagar able to collect 1 Crore+ while Market areas like Malleshwaram (4 lakh), Shivaji Nagar(5 lakh),Chickpet(11 lakh), K.R Market(6 lakhs) collect less than a 10th?
-
+Q: Why is Shantala Nagar able to collect 1 Crore+ while Market areas like Malleshwaram (4 lakh), Shivaji Nagar(5 lakh),Chickpet(11 lakh), K.R Market(6 lakhs) collect less than a 10th?
+```
 ## We Demand that BBMP 
 
 > Launch a Trade License collection drive in all major market and commercial areas of Bangalore.
@@ -125,9 +136,9 @@ addLegend(position = 'topright', pal=pal,values=shp$Amount, opacity = 0.4,      
 
 * Travel portals  list about 1070 Hotels in Bangalore. This does not include the smaller boarding and lodging units. 
 * BBMP's Trade license data shows that Bangalore has
-   - 649 lodging units. i.e. _atleast `r 100 - 100*649/1070`% units are missing from BBMP trade license dataset_
-   - 783 PG Units i.e. 4 PG Homes per ward. _Visual inspection and the scourge of PG Home pamphlets on every street indicates a different picture._
-   - 306 Choultries, Marriage halls, Party halls, convection centers etc across Bangalore. i.e. approx 1.5 per ward. _With every other restaurant sporting a party hall and a random google search throwing up series of kalayan mantapa's within less than a Km of each other and religious institution also doubling up as marriage halls the actual number will be far higher_
+   + 649 lodging units. i.e. _atleast `r 100 - 100*649/1070`% units are missing from BBMP trade license dataset_
+   + 783 PG Units i.e. 4 PG Homes per ward. _Visual inspection and the scourge of PG Home pamphlets on every street indicates a different picture. Check below for a detailed analysis of PG Houses_
+   + 306 Choultries, Marriage halls, Party halls, convection centers etc across Bangalore. i.e. approx 1.5 per ward. _With every other restaurant sporting a party hall and a random google search throwing up series of kalayan mantapa's within less than a Km of each other and religious institution also doubling up as marriage halls the actual number will be far higher_
 
 ##  We demand that BBMP 
 
@@ -140,7 +151,7 @@ addLegend(position = 'topright', pal=pal,values=shp$Amount, opacity = 0.4,      
 ```{r}
 pgHomes<- df_trade_license %>% group_by(Ward.Name,WARD_NO)%>%filter(grepl("Paying Guests",Trade.Sub.Name)) %>% summarise(NumPG=n(),fees=sum(Amount.Paid))%>%arrange(NumPG)
 ```
-BBMP's Trade license database reports `r sum(pgHomes$NumPG)` Paying Guest homes in `r NROW(pgHomes)` Wards. BBMP has either not collected the license fee or not reported the collection in the remaining `r 198 - NROW(pgHomes)`
+BBMP's Trade license database reports `r sum(pgHomes$NumPG)` Paying Guest homes in `r NROW(pgHomes)` Wards. BBMP has either not collected the license fee or is not reported the collection in the remaining `r 198 - NROW(pgHomes)`
 
 
 
@@ -159,10 +170,10 @@ addLegend(position = 'topright', pal=pal,values=shp$NumPG, labels = "PG Homes ac
 ```
 
 * Examining the map in detail we find examples like 
-  + Kumarswamy layout with 20 PG Homes, with its neighbouring wards having 0-3 PG Homes.
-  + Madiwala with 88 PG Homes while it neighbour Jakkasandra has only 4 and Gurappanapalya has 0 PG Homes.
+  + Kumarswamy layout with 20 PG Homes, with its neighboring wards having 0-3 PG Homes.
+  + Madiwala with 88 PG Homes while it neighbor Jakkasandra has only 4 and Gurappanapalya has 0 PG Homes.
 
-If we assume that proper identification of PG homes took place in wards with more than 10PG Homes then the average across bangalore would be `r mean(pgHomes[pgHomes$NumPG>=10,]$NumPG)` instead of the current average of `r mean(pgHomes$NumPG)`
+If we assume that proper identification of PG homes took place in wards with more than 10PG Homes then the average across Bangalore would be `r mean(pgHomes[pgHomes$NumPG>=10,]$NumPG)` instead of the current average of `r mean(pgHomes$NumPG)` PG Homes.
 
 ```{r results='asis'}
  print(xtable(pgHomes),type="html")
@@ -171,8 +182,55 @@ If we assume that proper identification of PG homes took place in wards with mor
 
 ## Where is the Building Mafia and the Water Tanker Mafia?
 
-* BBMP Has a category of Construction materials under which only 81 Traders are registered.
-* Similarly there is only one registered Water Tanker operator.
+* BBMP Has a category of Construction materials(brick, sand, cement, roofing etc. ) under which only 81 Traders are registered.
+* Similarly there is only one registered Water Tanker operator in Bangalore.
+
+## Other gross Errors...
+
+* 13 Firework wholesale/retail units are listed. Every Diwali we have at least 4-5 fire cracker shops in our layout averaging to approximately 20 shops across the ward. Extrapolating this, we should have around 4000 shops across Bangalore
+* BBMP lists 6 theaters whereas Bookmyshow lists 93 theaters.
+
+# Conclusion
+
+## Revenue Leakage
+
+We have identified 6 types of revenue leakage in BBMP's System
+
+1. Units who do not pay.
+2. Units which are mis-classified and pay at lower rate.
+3. Units who pay but are issued fake challan.
+4. Reuse of the same DD number for multiple units in the system
+5. Non-remittance of the amount collected to the proper account.
+6. Delayed remittance of the amount collected to the proper account.
+7. Non reversal of Bounced cheque transaction in the system.
+8. Manipulation of due amount in the system backend.
+
+The first two require a collusion between the citizen and the BBMP revenue officer. The collusion may require something as simple as BBMP officers neglecting their duties for this type of leakage to take place. or it may be as worse as the BBMP officers being active participants and advisors to the citizens in this evasion scheme.
+
+The third, fourth, fifth and sixth can be addressed by eliminating the need for the citizen to interact with the BBMP officials. Direct online transfer can address this issue. Merging the old records in the new system and enabling online payment of past dues is also required to curb this set of leakage.
+
+The seventh type of leakage can be detected by regular reconciliation of BBMP accounts with the corresponding bank.
+
+The eights type of leakage can be addressed by auditing the tax/fees computation and tax/fees collection systems.
+
+## We Demand that BBMP 
+> Should publish a white paper with detailed timebound  remedial actions that will be taken for each of the leakage.
+
+
+The amount collected per month is
+```{r results='asis'}
+df_amount<-df_trade_license%>%group_by(month)%>%summarise(Amount=sum(Amount.Paid))
+ggplot(df_amount,aes(x=month,y=Amount))+geom_line()
+```
+
+* In its [Press Release](http://www.newindianexpress.com/states/karnataka/Steep-Hike-in-BBMP-Trade-Licence-Fee-From-Feb-1/2016/01/29/article3250355.ece) BBMP claims that it has collected 18 Crores from 55,000 Traders.
+* Data Available indicates they have collected `r sum(df_amount$Amount)/crore` Crore from `r NROW(unique(df_trade_license$application..Number))` traders. We request BBMP to put the remaining data online.
+* The analysis of available Data shows that the reported fees collection is far less than the potential.
+* The average fees collected is `r mean (df_trade_license$Amount.Paid)` targeting the missing 4 lakh traders would result in a total collection of at least `r mean(df_trade_license$Amount.Paid)*455000/crore` Crores.
+* This year BBMP has increased the fee rates (at least doubled for all categories, 4 times increase for a few category) So the potential collection for 2016-2017 will be `r 2*mean(df_trade_license$Amount.Paid)*455000/crore` Crores
+
+
+# Appendix
 
 ### Property Tax Residential Units
 
@@ -194,27 +252,6 @@ If we assume that proper identification of PG homes took place in wards with mor
 
 ### Commercial Units.
 
-## Revenue Leakage
-
-We have identified 6 types of revenue leakage in BBMP's System
-
-1. Units who do not pay.
-2. Units which are mis-classified and pay a lower tax rate.
-3. Units who pay tax but are issued fake challan.
-4. Reuse of the same DD number for multiple properties in the tax system
-5. Non-remittance of the tax collected to the proper account.
-6. Delayed remittance of the tax collected to the proper account.
-7. Non reversal of Bounced cheque transaction in the system.
-8. Manipulation of tax due amount in the system backend.
-
-The first two require a collusion between the citizen and the BBMP revenue officer. The collusion may require something as simple as BBMP officers neglecting their duties for this type of leakage to take place. or it may be as worse as the BBMP officers being active participants and advisors to the citizens in this tax evasion scheme.
-
-The third, fourth, fifth and sixth can be addressed by eliminating the need for the citizen to interact with the BBMP officials. Direct online transfer can address this issue. Merging the old records in the new system and enabling online payment of past dues is also required to curb this set of leakage.
-
-The seventh type of leakage can be detected by regular recouncilation of BBMP accounts with the corresponding bank.
-
-The eights type of leakage can be addressed by auditing the tax computation and tax collection systems.
-
 # Trade license
 
 ## Parting Shot
@@ -231,7 +268,6 @@ clinics<-df_trade_license %>%  filter(grepl("Ayurv",Trade.Name))%>%
 
 ```
 
-# Appendix
 
 ## The heads under which fees are collected are.
 
@@ -242,7 +278,7 @@ clinics<-df_trade_license %>%  filter(grepl("Ayurv",Trade.Name))%>%
 
 
 # Missing Items
-The following heads have no reciepts..
+The following heads have no receipts..
 
 * Canteen in industries/hospitals etc. 
 * Heads for building material (lime,cement, sand, stone etc.) 
@@ -257,4 +293,11 @@ The following heads have no reciepts..
 * 300 1 star hotels
 
 #### Zomato
-* Zomato lists 8000+ restaurants in bangalore
+* Zomato lists 8000+ restaurants in Bangalore
+
+#### JustDial 
+* JustDial has 319 listings under Kalyan Mantapa. This will not cover the smaller party halls attached to restaurants.
+
+# Explore this dataset.
+The script and dataset used to create this analysis are available at
+https://github.com/DataDrivenPolicy/BBMP-Finances
